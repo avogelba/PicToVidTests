@@ -1,4 +1,5 @@
-﻿using AForge.Video.FFMPEG;
+﻿using AForge.Video.DirectShow;
+using AForge.Video.FFMPEG;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -23,8 +24,8 @@ namespace Pictures2Video4Timelaps
         private int width, height, fps, secs, videoType; //0 = mp4 , 1 = avi;
         //List<String> filesFound = new List<String>();
         private string myFileName, myFolderName, myOutputName, myText;
-
-
+        Boolean iSWebCamEnabled = false, isVideoMakeable = false;
+        VideoCaptureDevice videoSource;
 
         public Form1()
         {
@@ -261,6 +262,73 @@ namespace Pictures2Video4Timelaps
        
     }
 
+        private void WebCam_Click(object sender, EventArgs e)
+        {
+            if (!iSWebCamEnabled)
+            {
+                FilterInfoCollection videoInSources = new FilterInfoCollection(FilterCategory.VideoInputDevice);
+                if (videoInSources != null)
+                {
+                    videoSource = new VideoCaptureDevice(videoInSources[0].MonikerString);
+                    try
+                    {
+                        if (videoSource.VideoCapabilities.Length > 0)
+                        {
+                            string highesSolution = "0;0";
+                            for (int i = 0; i < videoSource.VideoCapabilities.Length; i++)
+                            {
+                                highesSolution = videoSource.VideoCapabilities[i].FrameSize.Width.ToString() + ";" + i.ToString();
+
+                            }
+                            videoSource.VideoResolution = videoSource.VideoCapabilities[Convert.ToInt32(highesSolution.Split(';')[1])];
+                        }
+
+                    }
+                    catch
+                    {
+
+                    }
+                    videoSource.NewFrame += new AForge.Video.NewFrameEventHandler(videoSource_newFrame);
+                    videoSource.Start();
+                    iSWebCamEnabled = true;
+                }
+                toggleButtons();
+
+            }
+            else
+            {
+                if (videoSource != null && videoSource.IsRunning)
+                {
+                    videoSource.Stop();
+                    videoSource.SignalToStop();
+                    videoSource.NewFrame -= videoSource_newFrame;
+
+                }
+                toggleButtons();
+                if (textBox1.Text.Length >0)
+                    pictureBox1.Image = Image.FromFile(myFileName); 
+                iSWebCamEnabled = false;
+
+            }
+        }
+        void toggleButtons()
+        {
+            if (isVideoMakeable)
+                buttonMakeVideo.Enabled = !buttonMakeVideo.Enabled;
+            else
+                buttonMakeVideo.Enabled = false;
+            buttonSelectFile.Enabled = !buttonSelectFile.Enabled;
+            textBoxWNew.Enabled = !textBoxWNew.Enabled;
+            checkBoxOutFormat.Enabled = !checkBoxOutFormat.Enabled;
+            textBoxFPS.Enabled = !textBoxFPS.Enabled;
+            textBoxSec.Enabled = !textBoxSec.Enabled;
+            textBoxWaterMark.Enabled = !textBoxWaterMark.Enabled;
+        }
+        void videoSource_newFrame(object sender, AForge.Video.NewFrameEventArgs eventArgs)
+        {
+            // pictureBox1.Enabled = true;
+            pictureBox1.Image = (Bitmap)eventArgs.Frame.Clone();
+        }
 
         private void textBoxSec_KeyPress(object sender, KeyPressEventArgs e)
         {
@@ -304,6 +372,7 @@ namespace Pictures2Video4Timelaps
             if (File.Exists(myFileName))
             {
                 buttonMakeVideo.Enabled = true;
+                isVideoMakeable = true;
                 //textBox1.Text = filesFound[0];
                 textBox1.Text = myFileName;
                 textBox1.Visible = true;
@@ -324,7 +393,8 @@ namespace Pictures2Video4Timelaps
             }
             else
             {
-                buttonMakeVideo.Enabled = false;
+               buttonMakeVideo.Enabled = false;
+                isVideoMakeable = false;
             }
          
         }

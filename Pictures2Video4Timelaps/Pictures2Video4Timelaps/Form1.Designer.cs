@@ -56,6 +56,7 @@
             this.textBoxWaterMark = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
+            this.WebCam = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -314,11 +315,22 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click_1);
             // 
+            // WebCam
+            // 
+            this.WebCam.Location = new System.Drawing.Point(656, 495);
+            this.WebCam.Name = "WebCam";
+            this.WebCam.Size = new System.Drawing.Size(75, 23);
+            this.WebCam.TabIndex = 29;
+            this.WebCam.Text = "Cam";
+            this.WebCam.UseVisualStyleBackColor = true;
+            this.WebCam.Click += new System.EventHandler(this.WebCam_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(869, 543);
+            this.Controls.Add(this.WebCam);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.textBoxWaterMark);
@@ -387,6 +399,7 @@
         private System.Windows.Forms.TextBox textBoxWaterMark;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button WebCam;
     }
 }
 
