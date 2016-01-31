@@ -11,6 +11,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+
+// Picture2Video
+// 
 namespace Pictures2Video4Timelaps
 {
     public partial class Form1 : Form
@@ -19,7 +22,7 @@ namespace Pictures2Video4Timelaps
         //private string folderName;
         private int width, height, fps, secs, videoType; //0 = mp4 , 1 = avi;
         //List<String> filesFound = new List<String>();
-        private string myFileName, myFolderName, myOutputName;
+        private string myFileName, myFolderName, myOutputName, myText;
 
 
 
@@ -103,6 +106,14 @@ namespace Pictures2Video4Timelaps
                         textBoxWNew.Text = imageReadResized.Width.ToString();
                         width = imageReadResized.Width;
                         height = imageReadResized.Height;
+                        if (width % 2 != 0)
+                        {
+                            width += 1;
+                        }
+                        if (height % 2 != 0)
+                        {
+                            height += 1;
+                        }
                         imageRead.Dispose();
                         imageReadResized.Dispose();
                     }
@@ -124,14 +135,24 @@ namespace Pictures2Video4Timelaps
                 int parsedInt = 0;
                 if (Int32.TryParse(textBoxWNew.Text, out parsedInt))
                 {
-                    if (parsedInt > 0 && parsedInt <= 1080)
+                    if (parsedInt > 0 )//&& parsedInt <= 1080)
                     {
                         Bitmap imageRead = Bitmap.FromFile(myFileName) as Bitmap;
                         Bitmap imageReadResized = ResizeIt(imageRead, parsedInt, height, "");
-                        textBoxHNew.Text = imageReadResized.Height.ToString();
-                        textBoxWNew.Text = imageReadResized.Width.ToString();
+                        //textBoxHNew.Text = imageReadResized.Height.ToString();
+                        //textBoxWNew.Text = imageReadResized.Width.ToString();
                         width = imageReadResized.Width;
                         height = imageReadResized.Height;
+                        if (width % 2 != 0)
+                        {
+                            width += 1;
+                        }
+                        if (height % 2 != 0)
+                        {
+                            height += 1;
+                        }
+                        textBoxHNew.Text = height.ToString();
+                        textBoxWNew.Text = width.ToString();
                         imageRead.Dispose();
                         imageReadResized.Dispose();
                         textBoxWNew.BackColor = Color.White;
@@ -204,6 +225,43 @@ namespace Pictures2Video4Timelaps
             initialValues();
         }
 
+        private void button1_Click_1(object sender, EventArgs e)
+        {
+            int width = 640;
+            int height = 480;
+
+            VideoFileWriter writer = new VideoFileWriter();
+            writer.Open(myFolderName + "\\" + "test_video.avi", width, height, 25, VideoCodec.MPEG4, 1000000);
+
+            Bitmap image = new Bitmap(width, height);
+            Graphics g = Graphics.FromImage(image);
+            g.FillRectangle(Brushes.Black, 0, 0, width, height);
+            Brush[] brushList = new Brush[] { Brushes.Green, Brushes.Red, Brushes.Yellow, Brushes.Pink, Brushes.LimeGreen };
+            Random rnd = new Random();
+
+            for (int i = 0; i < 250; i++)
+            {
+                int rndTmp = rnd.Next(1, 3);
+                Application.DoEvents();
+                g.FillRectangle(brushList[i % 5], (i % width) * 2, (i % height) * 0.5f, i % 30, i % 30);
+                g.FillRectangle(brushList[i % 5], (i % width) * 2, (i % height) * 2, i % 30, i % 30);
+                g.FillRectangle(brushList[i % 5], (i % width) * 0.5f, (i % height) * 2, i % 30, i % 30);
+                g.Save();
+                writer.WriteVideoFrame(image);
+            }
+
+            g.DrawString("(c) 2016 - Test Video", new System.Drawing.Font("Calibri", 30), Brushes.White, 80, 240);
+            g.Save();
+            for (int i = 0; i < 125; i++)
+            {
+                writer.WriteVideoFrame(image);
+            }
+
+            writer.Close();
+       
+    }
+
+
         private void textBoxSec_KeyPress(object sender, KeyPressEventArgs e)
         {
             e.Handled = !(char.IsDigit(e.KeyChar) || e.KeyChar == 8 || e.KeyChar == 13);
@@ -253,6 +311,7 @@ namespace Pictures2Video4Timelaps
                 Bitmap imageRead = Bitmap.FromFile(myFileName) as Bitmap;
                 textBoxHOriginal.Text = imageRead.Height.ToString();
                 textBoxWOriginal.Text = imageRead.Width.ToString();
+                
                 Bitmap imageReadResized = ResizeIt(imageRead, width, height, "");
                  textBoxHNew.Text = imageReadResized.Height.ToString();
                 textBoxWNew.Text = imageReadResized.Width.ToString();
@@ -284,7 +343,24 @@ namespace Pictures2Video4Timelaps
                 progressBar1.Step = 1;
                 progressBar1.Value = 0;
                 toolStripStatusLabel1.Text = "Running...";
+
+                /*
+                Supported Formats:
+                    Raw	        Raw (uncompressed) video.
+	                MPEG2	    MPEG-2 part 2.
+	                FLV1	    Flash Video (FLV) / Sorenson Spark / Sorenson H.263.
+	                H263P	    H.263+ / H.263-1998 / H.263 version 2.
+	                MSMPEG4v3	MPEG-4 part 2 Microsoft variant version 3.
+	                MSMPEG4v2	MPEG-4 part 2 Microsoft variant version 2.
+	                WMV2	    Windows Media Video 8.
+	                WMV1	    Windows Media Video 7.
+	                MPEG4	    MPEG-4 part 2.
+	                Default	    Default video codec, which FFmpeg library selects for the specified file format.
+                    missing : H264        
+                */
+
                 videoWriter.Open(myFolderName + "\\" + myOutputName, width, height, fps, ((videoType == 0) ? VideoCodec.MPEG2 : VideoCodec.MPEG4));
+                //videoWriter.Open(myFolderName + "\\" + myOutputName, width, height, fps, ((videoType == 0) ? VideoCodec.H263P : VideoCodec.MPEG4));
                 //Files
                 //for (int i =0;i < filesFound.Count;i++)
                 for (int i = 0; i < maxI; i++)
@@ -292,7 +368,11 @@ namespace Pictures2Video4Timelaps
                     //using (Bitmap image = Bitmap.FromFile(filesFound[i]) as Bitmap)
                     using (Bitmap image = Bitmap.FromFile(myFileName) as Bitmap)
                     {
-                       Bitmap imageResized = ResizeIt(image, width, height, "");
+                        if (textBoxWaterMark.Text != null)
+                            myText = textBoxWaterMark.Text;
+                        else
+                            myText = "";
+                        Bitmap imageResized = ResizeIt(image, width, height, myText);
 
                         //Seconds
                         for (int j = 0; j < secs; j++)
@@ -373,7 +453,7 @@ namespace Pictures2Video4Timelaps
                     containerBox.X = (int)(diagonal / 10);
                     Font stringFont = null; ;
                     StringFormat sf = null;
-                    if (message.Length < 0)
+                    if (message.Length > 0)
                     {
                         float messageLength = (float)(diagonal / message.Length * 1);
                         containerBox.Y = -(int)(messageLength / 1.6);
@@ -385,7 +465,7 @@ namespace Pictures2Video4Timelaps
                     float slope = (float)(Math.Atan2(newImage.Height, newImage.Width) * 180 / Math.PI);
 
                     gr.RotateTransform(slope);
-                    if (message.Length < 0)
+                    if (message.Length > 0)
                     {
                         gr.DrawString(message, stringFont, myBrush, containerBox, sf);
                     }
@@ -403,8 +483,11 @@ namespace Pictures2Video4Timelaps
             decimal heightC = 0;
             decimal ratio = 0;
 
-
-            if (newWidth < w1)
+            if (newWidth == w1)
+            {
+                return (int)h1;
+            }
+            else if (newWidth < w1)
             {
                 ratio = w1 / newWidth;
                 heightC = h1 / ratio;
@@ -413,7 +496,7 @@ namespace Pictures2Video4Timelaps
                 return (int)heightC;
             }
 
-            if (w1 < newWidth)
+            else if (w1 < newWidth)
             {
                 ratio = newWidth / w1;
                 heightC = h1 * ratio;
